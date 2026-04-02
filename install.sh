@@ -41,10 +41,33 @@ BINARY_NAME="git-back-$OS_NAME-$ARCH_NAME"
 DOWNLOAD_URL="https://github.com/$REPO/releases/download/$VERSION/git-back-$VERSION-$OS_NAME-$ARCH_NAME.tar.gz"
 
 TMP_DIR=$(mktemp -d)
+trap "rm -rf $TMP_DIR" EXIT
+
 cd "$TMP_DIR"
 
 echo "Downloading from $DOWNLOAD_URL..."
-curl -sL "$DOWNLOAD_URL" | tar xz
+if ! curl -sfL "$DOWNLOAD_URL" -o git-back.tar.gz; then
+    echo "❌ Failed to download git-back"
+    echo "Check if version $VERSION exists at: https://github.com/$REPO/releases"
+    exit 1
+fi
+
+# Download checksum file
+CHECKSUM_URL="https://github.com/$REPO/releases/download/$VERSION/checksums.txt"
+if curl -sfL "$CHECKSUM_URL" -o checksums.txt 2>/dev/null; then
+    echo "Verifying checksum..."
+    if command -v shasum >/dev/null 2>&1; then
+        grep "git-back-$VERSION-$OS_NAME-$ARCH_NAME.tar.gz" checksums.txt | shasum -a 256 -c - || {
+            echo "❌ Checksum verification failed!"
+            exit 1
+        }
+        echo "✅ Checksum verified"
+    else
+        echo "⚠️  shasum not found, skipping checksum verification"
+    fi
+fi
+
+tar xzf git-back.tar.gz
 
 # Install to user's local bin
 mkdir -p "$HOME/.local/bin"

@@ -383,7 +383,20 @@ func getWorktrees() map[string]worktreeInfo {
 }
 
 func copyToClipboard(text string) error {
-	cmd := exec.Command("pbcopy")
+	var cmd *exec.Cmd
+
+	if _, err := exec.LookPath("pbcopy"); err == nil {
+		cmd = exec.Command("pbcopy")
+	} else if _, err := exec.LookPath("xclip"); err == nil {
+		cmd = exec.Command("xclip", "-selection", "clipboard")
+	} else if _, err := exec.LookPath("xsel"); err == nil {
+		cmd = exec.Command("xsel", "--clipboard", "--input")
+	} else if _, err := exec.LookPath("wl-copy"); err == nil {
+		cmd = exec.Command("wl-copy")
+	} else {
+		return fmt.Errorf("no clipboard utility found")
+	}
+
 	pipe, err := cmd.StdinPipe()
 	if err != nil {
 		return err
@@ -394,6 +407,7 @@ func copyToClipboard(text string) error {
 	}
 
 	if _, err := pipe.Write([]byte(text)); err != nil {
+		pipe.Close()
 		return err
 	}
 

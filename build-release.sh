@@ -28,3 +28,16 @@ zip -j dist/git-back-$VERSION-windows-amd64.zip dist/git-back-windows-amd64.exe
 
 echo "✅ Built all binaries in dist/"
 ls -lh dist/*.tar.gz dist/*.zip
+
+# Generate checksums
+echo ""
+echo "Generating checksums..."
+cd dist
+shasum -a 256 *.tar.gz *.zip > checksums.txt
+cat checksums.txt
+cd ..
+
+echo ""
+echo "📦 Release files ready:"
+echo "  - Upload all files from dist/ to GitHub release"
+echo "  - Make sure to include checksums.txt"
