@@ -150,7 +150,12 @@ func (m model) handleMenuInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		worktree := m.worktrees[branch]
 
 		if m.menuCursor == 0 {
-			fmt.Printf("cd %s\n", worktree.path)
+			fmt.Printf("\ncd %s\n\n", worktree.path)
+
+			if err := copyToClipboard(worktree.path); err == nil {
+				fmt.Println("(Path copied to clipboard)")
+			}
+
 			return m, tea.Quit
 		} else {
 			err := removeWorktreeAndCheckout(branch, worktree.path)
@@ -159,7 +164,7 @@ func (m model) handleMenuInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.showingMenu = false
 				return m, nil
 			}
-			fmt.Printf("Removed worktree and switched to branch '%s'\n", branch)
+			fmt.Printf("\nRemoved worktree and switched to branch '%s'\n", branch)
 			return m, tea.Quit
 		}
 	}
@@ -313,10 +318,33 @@ func isGitRepo() bool {
 }
 
 func checkoutBranch(branch string) error {
+	statusCmd := exec.Command("git", "status", "--porcelain")
+	statusOutput, err := statusCmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to check git status: %w", err)
+	}
+
+	if len(strings.TrimSpace(string(statusOutput))) > 0 {
+		modified := []string{}
+		lines := strings.Split(strings.TrimSpace(string(statusOutput)), "\n")
+		for i, line := range lines {
+			if i >= 3 {
+				modified = append(modified, "...")
+				break
+			}
+			if len(line) > 2 {
+				modified = append(modified, strings.TrimSpace(line[3:]))
+			}
+		}
+		return fmt.Errorf("uncommitted changes would be overwritten:\n  %s\n\nCommit or stash your changes first", strings.Join(modified, "\n  "))
+	}
+
 	cmd := exec.Command("git", "checkout", branch)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	return cmd.Run()
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("checkout failed: %s", strings.TrimSpace(string(output)))
+	}
+	return nil
 }
 
 func getWorktrees() map[string]worktreeInfo {
@@ -354,6 +382,28 @@ func getWorktrees() map[string]worktreeInfo {
 	return worktrees
 }
 
+func copyToClipboard(text string) error {
+	cmd := exec.Command("pbcopy")
+	pipe, err := cmd.StdinPipe()
+	if err != nil {
+		return err
+	}
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	if _, err := pipe.Write([]byte(text)); err != nil {
+		return err
+	}
+
+	if err := pipe.Close(); err != nil {
+		return err
+	}
+
+	return cmd.Wait()
+}
+
 func removeWorktreeAndCheckout(branch, worktreePath string) error {
 	statusCmd := exec.Command("git", "-C", worktreePath, "status", "--porcelain")
 	statusOutput, err := statusCmd.Output()
@@ -366,9 +416,9 @@ func removeWorktreeAndCheckout(branch, worktreePath string) error {
 	}
 
 	removeCmd := exec.Command("git", "worktree", "remove", worktreePath)
-	removeCmd.Stderr = os.Stderr
-	if err := removeCmd.Run(); err != nil {
-		return fmt.Errorf("failed to remove worktree: %w", err)
+	output, err := removeCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to remove worktree: %s", strings.TrimSpace(string(output)))
 	}
 
 	return checkoutBranch(branch)
