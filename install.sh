@@ -1,8 +1,21 @@
 #!/bin/bash
 set -e
 
-VERSION=${1:-latest}
 REPO="yerbapadre/git-back"
+VERSION_ARG=${1:-latest}
+
+# Resolve "latest" to actual version tag
+if [ "$VERSION_ARG" = "latest" ]; then
+    echo "Fetching latest version..."
+    VERSION=$(curl -sfL "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
+    if [ -z "$VERSION" ]; then
+        echo "❌ Failed to fetch latest version"
+        exit 1
+    fi
+    echo "Latest version: $VERSION"
+else
+    VERSION="$VERSION_ARG"
+fi
 
 # Detect OS and architecture
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
