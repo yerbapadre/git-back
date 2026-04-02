@@ -13,19 +13,40 @@ A fast, interactive CLI tool to navigate your git branch history and quickly swi
 
 ## Installation
 
-### Build from Source
+### Quick Install (macOS/Linux)
+
+```bash
+curl -sL https://raw.githubusercontent.com/jakeevans/git-back/main/install.sh | bash
+```
+
+### Using Go
 
 ```bash
 go install github.com/jakeevans/git-back@latest
 ```
 
-Or clone and build locally:
+### Manual Download
+
+Download pre-built binaries from [Releases](https://github.com/jakeevans/git-back/releases):
+- macOS (Intel): `git-back-darwin-amd64.tar.gz`
+- macOS (Apple Silicon): `git-back-darwin-arm64.tar.gz`
+- Linux (x64): `git-back-linux-amd64.tar.gz`
+- Linux (ARM64): `git-back-linux-arm64.tar.gz`
+- Windows (x64): `git-back-windows-amd64.zip`
+
+Extract and move to your PATH:
+```bash
+tar -xzf git-back-*.tar.gz
+sudo mv git-back-* /usr/local/bin/git-back
+```
+
+### Build from Source
 
 ```bash
 git clone https://github.com/jakeevans/git-back.git
 cd git-back
 go build -o git-back
-mv git-back /usr/local/bin/  # or anywhere in your PATH
+sudo mv git-back /usr/local/bin/
 ```
 
 ## Usage
