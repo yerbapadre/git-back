@@ -2,7 +2,7 @@
 set -e
 
 VERSION=${1:-latest}
-REPO="jakeevans/git-back"
+REPO="yerbapadre/git-back"
 
 # Detect OS and architecture
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')

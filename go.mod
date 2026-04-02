@@ -1,4 +1,4 @@
-module github.com/jakeevans/git-back
+module github.com/yerbapadre/git-back
 
 go 1.24.4
 

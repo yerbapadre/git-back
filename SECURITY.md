@@ -20,7 +20,7 @@ If you discover a security vulnerability, please email: [your-email] (DO NOT ope
 Instead of piping curl to bash, review the script first:
 ```bash
 # Download and inspect
-curl -sL https://raw.githubusercontent.com/jakeevans/git-back/main/install.sh -o install.sh
+curl -sL https://raw.githubusercontent.com/yerbapadre/git-back/main/install.sh -o install.sh
 cat install.sh  # Review the script
 bash install.sh
 ```
